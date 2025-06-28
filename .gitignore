@@ -1,0 +1,14 @@
+*.pem
+*.key
+*.pub
+__pycache__/
+*.pyc
+.dockerignore
+.prettierrc
+ansible/
+adcash_key
+adcash_key.pub
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
