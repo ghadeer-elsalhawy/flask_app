@@ -12,11 +12,14 @@
 
 ### Infrastructure Provisioning
 - Used Terraform to create AWS security group, EC2 instance, and an elastic group to ensure that the application has a static IP
-- A key was created in order to access the instance via ssh.
+- The EC2 key is first generated locally and passed to the ec2
+- Terraform automatically creates the key file locally to be used afterwards by ansible.
+- Terraform saves the elastic IP in host file to be used by ansible to access the VM.
 
-### Infrastructure Provisioning
-I will continue working on that step, but here is the approach I will take in the ansible playbook:
-* Install K3s on the instance.
-* Install Helm in order to use the prometheus helm chart or the kube-prometheus stack in order to visualize using Grafana.
-  * I will modify the default values for prometheus service to be able to access it from my local machine. 
-* Apply the application manifest files.
+### Infrastructure Configuration
+- Ansible access the VM using the hosts and key files created previously by Terraform.
+- The playbook installs K3s (light weight k8s distribution) and helm if not installed.
+- Used Kube-prometheus-stack helm chart to be able to use ServiceMonitor.
+- Added custom values for prometheus helm chart to be accessed from another machine.
+
+Note: Ansible playbook was tested successfully on multipass VM and the instance type was chosen based on the multipass VM resources usage.

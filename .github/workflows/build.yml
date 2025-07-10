@@ -1,0 +1,30 @@
+name: Build and push latest image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app-code/**'
+
+jobs:
+  Build-and-push-image:
+    name: Build and push Docker images
+    runs-on: ubuntu-latest
+    environment: Docker Secret
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: |
+          cd app-code
+          docker build -t ghadeerelsalhawy/flask-app:latest -t ghadeerelsalhawy/flask-app:${{ github.run_id }} .
+
+      - name: Push Docker images
+        run: |
+          docker push ghadeerelsalhawy/flask-app:latest
+          docker push ghadeerelsalhawy/flask-app:${{ github.run_id }}

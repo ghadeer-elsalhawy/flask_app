@@ -15,10 +15,16 @@ resource "local_file" "private_key_pem" {
 }
 
 resource "aws_instance" "flask_app" {
-    ami                    = "ami-0c94855ba95c71c99"  
-    instance_type          = "t2.micro"          
+    ami                    = "ami-0a313d6098716f372"  
+    instance_type          = "t3.medium"         
     key_name               = aws_key_pair.ec2_key.key_name
     vpc_security_group_ids = [aws_security_group.flask_app_sg.id]
+
+    root_block_device {
+    volume_size = 7        # 7 GB disk
+    volume_type = "gp3"    # General Purpose SSD
+    delete_on_termination = true
+    }
 }
 
 resource "aws_eip" "app_eip" {
