@@ -5,7 +5,6 @@ __pycache__/
 *.pyc
 .dockerignore
 .prettierrc
-ansible/
 adcash_key
 adcash_key.pub
 .terraform/

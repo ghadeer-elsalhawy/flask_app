@@ -10,7 +10,7 @@ resource "aws_key_pair" "ec2_key" {
 
 resource "local_file" "private_key_pem" {
     content          = tls_private_key.ec2_private_key.private_key_pem
-    filename         = "${path.module}/../ec2-key.pem"
+    filename         = "${path.module}/../ec2-key"
     file_permission  = "0600"
 }
 
@@ -29,7 +29,7 @@ resource "local_file" "ansible_inventory" {
     filename = "${path.module}/../ansible/inventory.ini"
     content  = <<EOT
     [webservers]
-    ${aws_eip.app_eip.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=../ec2-key.pem
+    ${aws_eip.app_eip.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=../ec2-key
     EOT
     file_permission = "0644"
     

@@ -1,0 +1,98 @@
+---
+- name: Install K3s on VM
+  hosts: all
+  become: true
+  gather_facts: false
+  environment:
+      KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  tasks:
+      - name: Install K3s cluster
+        shell: curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik" sh -
+        args:
+            creates: /usr/local/bin/k3s
+
+      - name: Ensure K3s service is running
+        systemd:
+            name: k3s
+            state: started
+            enabled: true
+
+      - name: Wait for K3s service to be active
+        systemd:
+            name: k3s
+            state: started
+            enabled: true
+        register: k3s_status
+        until: k3s_status.status.ActiveState == "active"
+        retries: 10
+        delay: 6
+
+      - name: Set permissions on K3s kubeconfig file
+        file:
+            path: /etc/rancher/k3s/k3s.yaml
+            mode: "0644"
+
+      - name: Check if Helm binary exists
+        stat:
+            path: /usr/local/bin/helm
+        register: helm_stat
+
+      - name: Download Helm binary
+        shell: curl -L https://get.helm.sh/helm-v3.18.4-linux-amd64.tar.gz -o /tmp/helm.tar.gz
+        args:
+            creates: /tmp/helm.tar.gz
+        when: not helm_stat.stat.exists
+
+      - name: Extract Helm binary
+        unarchive:
+            src: /tmp/helm.tar.gz
+            dest: /tmp/
+            remote_src: yes
+        when: not helm_stat.stat.exists
+
+      - name: Move Helm binary to /usr/local/bin
+        copy:
+            src: /tmp/linux-amd64/helm
+            dest: /usr/local/bin/helm
+            mode: "0755"
+            remote_src: yes
+        when: not helm_stat.stat.exists
+
+      - name: Add Prometheus Helm repository
+        kubernetes.core.helm_repository:
+            name: prometheus-community
+            repo_url: https://prometheus-community.github.io/helm-charts
+            state: present
+
+      - name: Check if Prometheus Helm release exists
+        command: helm list -n monitoring -q
+        register: helm_releases
+        changed_when: false
+
+      - name: Copy Prometheus values file to remote host
+        copy:
+            src: ../manifests/prometheus/values-prometheus.yml
+            dest: /tmp/prometheus.values.yml
+            mode: "0644"
+        when: "'prometheus' not in helm_releases.stdout_lines"
+
+      - name: Install Prometheus Helm chart
+        kubernetes.core.helm:
+            name: prometheus
+            chart_ref: prometheus-community/kube-prometheus-stack
+            release_namespace: monitoring
+            create_namespace: true
+            values_files:
+                - /tmp/prometheus.values.yml
+            state: present
+            update_repo_cache: yes
+        when: "'prometheus' not in helm_releases.stdout_lines"
+
+      - name: Copy web-app manifests to remote host
+        copy:
+            src: ../manifests/web-app/
+            dest: /tmp/web-app-manifests/
+            mode: "0644"
+
+      - name: Apply web-app manifests
+        shell: kubectl apply -f /tmp/web-app-manifests/
