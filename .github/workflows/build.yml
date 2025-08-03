@@ -22,9 +22,9 @@ jobs:
       - name: Build Docker image
         run: |
           cd app-code
-          docker build -t ghadeerelsalhawy/flask-app:latest -t ghadeerelsalhawy/flask-app:${{ github.run_id }} .
+          docker build -t "${{ secrets.DOCKERHUB_USERNAME }}"/flask-app:latest -t "${{ secrets.DOCKERHUB_USERNAME }}"/flask-app:${{ github.run_id }} .
 
       - name: Push Docker images
         run: |
-          docker push ghadeerelsalhawy/flask-app:latest
-          docker push ghadeerelsalhawy/flask-app:${{ github.run_id }}
+          docker push "${{ secrets.DOCKERHUB_USERNAME }}"/flask-app:latest
+          docker push "${{ secrets.DOCKERHUB_USERNAME }}"/flask-app:${{ github.run_id }}
